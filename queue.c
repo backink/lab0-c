@@ -23,7 +23,6 @@ struct list_head *q_new()
         return NULL;
 
     INIT_LIST_HEAD(head);
-
     return head;
 }
 
@@ -49,13 +48,12 @@ bool q_insert_head(struct list_head *head, char *s)
     if (!ele)
         return false;
 
-    ele->value = malloc(strlen(s) + 1);
+    ele->value = strdup(s);
     if (!ele->value) {
         free(ele);
         return false;
     }
 
-    strncpy(ele->value, s, strlen(s) + 1);
     list_add(&ele->list, head);
     return true;
 }
@@ -70,13 +68,12 @@ bool q_insert_tail(struct list_head *head, char *s)
     if (!ele)
         return false;
 
-    ele->value = malloc(strlen(s) + 1);
+    ele->value = strdup(s);
     if (!ele->value) {
         free(ele);
         return false;
     }
 
-    strncpy(ele->value, s, strlen(s) + 1);
     list_add_tail(&ele->list, head);
     return true;
 }
@@ -135,16 +132,13 @@ bool q_delete_mid(struct list_head *head)
         return false;
 
     struct list_head *first = head->next, *last = head->prev;
-    while (!(first == last)) {
+    while ((first != last) && (first->next != last)) {
         last = last->prev;
-        if (last == first)
-            break;
         first = first->next;
     }
-    list_del(first);
     element_t *ele = list_entry(first, element_t, list);
+    list_del(first);
     q_release_element(ele);
-
     return true;
 }
 
@@ -152,15 +146,13 @@ bool q_delete_mid(struct list_head *head)
 bool q_delete_dup(struct list_head *head)
 {
     // https://leetcode.com/problems/remove-duplicates-from-sorted-list-ii/
-    if (!head)
+    if (!head || list_empty(head))
         return false;
-    if (list_empty(head))
-        return true;
 
     element_t *entry, *safe;
     bool dup = false;
     list_for_each_entry_safe (entry, safe, head, list) {
-        if (&safe->list != head && strcmp(entry->value, safe->value) == 0) {
+        if (&safe->list != head && !strcmp(entry->value, safe->value)) {
             dup = true;
             list_del(&entry->list);
             q_release_element(entry);
@@ -288,6 +280,7 @@ int q_ascend(struct list_head *head)
         element_t *ele_pre = list_entry(min->prev, element_t, list);
         if (strcmp(ele_min->value, ele_pre->value) < 0) {
             list_del(min->prev);
+            q_release_element(ele_pre);
         } else {
             min = min->prev;
             ret++;
@@ -310,6 +303,7 @@ int q_descend(struct list_head *head)
         element_t *ele_pre = list_entry(max->prev, element_t, list);
         if (strcmp(ele_max->value, ele_pre->value) > 0) {
             list_del(max->prev);
+            q_release_element(ele_pre);
         } else {
             max = max->prev;
             ret++;
