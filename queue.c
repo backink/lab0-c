@@ -10,6 +10,8 @@
  *   cppcheck-suppress nullPointer
  */
 
+void reverse_between(struct list_head *, struct list_head *);
+
 /* Create an empty queue */
 struct list_head *q_new()
 {
@@ -205,6 +207,36 @@ void q_reverse(struct list_head *head)
 void q_reverseK(struct list_head *head, int k)
 {
     // https://leetcode.com/problems/reverse-nodes-in-k-group/
+    if (!head || list_empty(head) || list_is_singular(head) || k <= 1) {
+        return;
+    }
+
+    struct list_head *start = head->next;
+    struct list_head *node;
+    while (start != head) {
+        int n = k - 1;
+        for (node = start; n > 0 && node->next != head; node = node->next) {
+            n--;
+        }
+        if (n == 0) {
+            reverse_between(start, node);
+            start = start->next;
+        } else {
+            break;
+        }
+    }
+}
+
+void reverse_between(struct list_head *start, struct list_head *end)
+{
+    struct list_head *head = start->prev;
+    struct list_head *tmp;
+    while (end != start) {
+        tmp = end->prev;
+        list_move(end, head);
+        head = head->next;
+        end = tmp;
+    }
 }
 
 /* Sort elements of queue in ascending/descending order */
