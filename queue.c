@@ -12,6 +12,8 @@
 
 void reverse_between(struct list_head *, struct list_head *);
 
+void merge(struct list_head *, struct list_head *, bool);
+
 /* Create an empty queue */
 struct list_head *q_new()
 {
@@ -240,7 +242,47 @@ void reverse_between(struct list_head *start, struct list_head *end)
 }
 
 /* Sort elements of queue in ascending/descending order */
-void q_sort(struct list_head *head, bool descend) {}
+void q_sort(struct list_head *head, bool descend)
+{
+    if (!head || list_empty(head) || list_is_singular(head)) {
+        return;
+    }
+
+    struct list_head *first = head->next, *last = head->prev;
+    while (first != last) {
+        last = last->prev;
+        if (first == last) {
+            break;
+        }
+        first = first->next;
+    }
+    LIST_HEAD(head_to);
+    list_cut_position(&head_to, head, first);
+    q_sort(head, descend);
+    q_sort(&head_to, descend);
+    merge(head, &head_to, descend);
+}
+
+void merge(struct list_head *head_main, struct list_head *head, bool descend)
+{
+    struct list_head *node_main = head_main->next, *node = head->next;
+    struct list_head *tmp;
+    int flag = descend ? 1 : -1;
+    while (node_main != head_main && node != head) {
+        const element_t *entry_main = list_entry(node_main, element_t, list);
+        const element_t *entry = list_entry(node, element_t, list);
+        while (node_main != head_main &&
+               (flag * strcmp(entry_main->value, entry->value) > 0)) {
+            node_main = node_main->next;
+            entry_main = list_entry(node_main, element_t, list);
+        }
+        tmp = node->next;
+        list_move(node, node_main->prev);
+        node = tmp;
+    }
+    if (node != head)
+        list_splice_tail(head, head_main);
+}
 
 /* Remove every node which has a node with a strictly less value anywhere to
  * the right side of it */
