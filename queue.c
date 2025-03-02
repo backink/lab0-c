@@ -115,6 +115,8 @@ element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
         strncpy(sp, ele->value, bufsize - 1);
         sp[bufsize - 1] = '\0';
     }
+
+    list_del(head->prev);
     return ele;
 }
 
