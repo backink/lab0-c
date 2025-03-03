@@ -291,7 +291,24 @@ void merge(struct list_head *head_main, struct list_head *head, bool descend)
 int q_ascend(struct list_head *head)
 {
     // https://leetcode.com/problems/remove-nodes-from-linked-list/
-    return 0;
+    if (!head || list_empty(head)) {
+        return 0;
+    }
+
+    struct list_head *min = head->prev;
+    int ret = 1;
+    while (min->prev != head) {
+        const element_t *ele_min = list_entry(min, element_t, list);
+        element_t *ele_pre = list_entry(min->prev, element_t, list);
+        if (strcmp(ele_min->value, ele_pre->value) < 0) {
+            list_del(min->prev);
+            q_release_element(ele_pre);
+        } else {
+            min = min->prev;
+            ret++;
+        }
+    }
+    return ret;
 }
 
 /* Remove every node which has a node with a strictly greater value anywhere to
@@ -299,7 +316,24 @@ int q_ascend(struct list_head *head)
 int q_descend(struct list_head *head)
 {
     // https://leetcode.com/problems/remove-nodes-from-linked-list/
-    return 0;
+    if (!head || list_empty(head)) {
+        return 0;
+    }
+
+    struct list_head *max = head->prev;
+    int ret = 1;
+    while (max->prev != head) {
+        const element_t *ele_max = list_entry(max, element_t, list);
+        element_t *ele_pre = list_entry(max->prev, element_t, list);
+        if (strcmp(ele_max->value, ele_pre->value) > 0) {
+            list_del(max->prev);
+            q_release_element(ele_pre);
+        } else {
+            max = max->prev;
+            ret++;
+        }
+    }
+    return ret;
 }
 
 /* Merge all the queues into one sorted queue, which is in ascending/descending
@@ -307,5 +341,30 @@ int q_descend(struct list_head *head)
 int q_merge(struct list_head *head, bool descend)
 {
     // https://leetcode.com/problems/merge-k-sorted-lists/
-    return 0;
+    if (!head || list_empty(head)) {
+        return 0;
+    }
+
+    struct list_head *first = head->next, *last = head->prev;
+    int ret = 0;
+    bool count_size = true;
+    while (last != head->next) {
+        while (first != last && first->prev != last) {
+            queue_contex_t *q_first = list_entry(first, queue_contex_t, chain);
+            queue_contex_t *q_last = list_entry(last, queue_contex_t, chain);
+            if (count_size) {
+                ret += q_first->size + q_last->size;
+            }
+            merge(q_first->q, q_last->q, descend);
+            first = first->next;
+            last = last->prev;
+        }
+        if (count_size && first == last) {
+            const queue_contex_t *q = list_entry(first, queue_contex_t, chain);
+            ret += q->size;
+        }
+        count_size = false;
+        first = head->next;
+    }
+    return ret;
 }
