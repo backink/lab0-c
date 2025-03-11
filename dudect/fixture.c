@@ -42,6 +42,7 @@
 
 #define ENOUGH_MEASURE 10000
 #define TEST_TRIES 10
+#define PERCENTILE 95
 
 static t_context_t *t;
 
@@ -64,12 +65,28 @@ static void differentiate(int64_t *exec_times,
         exec_times[i] = after_ticks[i] - before_ticks[i];
 }
 
-static void update_statistics(const int64_t *exec_times, uint8_t *classes)
+static int cmp(int64_t *a, int64_t *b)
 {
+    if (*a == *b) {
+        return 0;
+    }
+    return *a > *b ? 1 : -1;
+}
+
+static int64_t percentile()
+{
+    return N_MEASURES * (1 - (pow(0.5, 10 * (double) (PERCENTILE + 1) / 100)));
+}
+
+static void update_statistics(int64_t *exec_times, uint8_t *classes)
+{
+    int64_t position = percentile();
+    qsort(exec_times, N_MEASURES, sizeof(int64_t),
+          (int (*)(const void *, const void *)) cmp);
     for (size_t i = 0; i < N_MEASURES; i++) {
         int64_t difference = exec_times[i];
         /* CPU cycle counter overflowed or dropped measurement */
-        if (difference <= 0)
+        if (difference <= 0 || difference > exec_times[position])
             continue;
 
         /* do a t-test on the execution time */
@@ -170,8 +187,11 @@ static bool test_const(char *text, int mode)
     return result;
 }
 
-#define DUT_FUNC_IMPL(op) \
-    bool is_##op##_const(void) { return test_const(#op, DUT(op)); }
+#define DUT_FUNC_IMPL(op)                \
+    bool is_##op##_const(void)           \
+    {                                    \
+        return test_const(#op, DUT(op)); \
+    }
 
 #define _(x) DUT_FUNC_IMPL(x)
 DUT_FUNCS
