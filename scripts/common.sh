@@ -54,15 +54,12 @@ progress() {
   local bar_left
   bar_left=$(printf "%${left}s")
 
-  # If no leftover space remains, we have presumably reached 100%.
-  if [ "$left" -eq 0 ]; then
-    # Clear the existing progress line
-    printf "\r\033[K"
-    # FIXME: remove this hack to print the final 100% bar with a newline
-    printf "Progress: [########################################] 100%%\n"
-  else
-    # Update the bar in place (no extra newline)
-    printf "\rProgress: [${bar_done// /#}${bar_left// /-}] ${percentage}%%"
+  # Print the progress bar in a single line, updating it dynamically.
+  printf "\rProgress: [%s%s] %d%%" "${bar_done// /#}" "${bar_left// /-}" "$percentage"
+
+  # When reaching 100%, automatically print a newline to finalize the output.
+  if [ "$percentage" -eq 100 ]; then
+    printf "\n"
   fi
 }
 
@@ -89,18 +86,16 @@ make_random_string() {
 
   if [ -z "$sub_str" ]; then
     # Produce an exact random string of length total_len
-    cat /dev/urandom | tr -dc 'a-z0-9' | head -c "$total_len"
+    cat /dev/urandom | LC_ALL=C tr -dc 'a-z0-9' | head -c "$total_len"
   else
     # Insert the substring at a random position
     local sub_len=${#sub_str}
     local rand_len=$(( total_len - sub_len ))
 
     local raw_rand
-    raw_rand=$(cat /dev/urandom | tr -dc 'a-z0-9' | head -c "$rand_len")
+    raw_rand=$(cat /dev/urandom | LC_ALL=C tr -dc 'a-z0-9' | head -c "$rand_len")
 
     local pos=$(( RANDOM % (rand_len + 1) ))
     echo "${raw_rand:0:pos}${sub_str}${raw_rand:pos}"
   fi
 }
-
-set_colors

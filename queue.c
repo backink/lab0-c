@@ -4,6 +4,7 @@
 
 #include "queue.h"
 
+
 /* Notice: sometimes, Cppcheck would find the potential NULL pointer bugs,
  * but some of them cannot occur. You can suppress them by adding the
  * following line.
@@ -36,7 +37,7 @@ void q_free(struct list_head *head)
     }
 
     element_t *entry = NULL, *safe = NULL;
-    list_for_each_entry_safe (entry, safe, head, list) {
+    list_for_each_entry_safe(entry, safe, head, list) {
         q_release_element(entry);
     }
     free(head);
@@ -129,7 +130,7 @@ int q_size(struct list_head *head)
 
     int ret = 0;
     struct list_head *tmp = NULL;
-    list_for_each (tmp, head) {
+    list_for_each(tmp, head) {
         ret++;
     }
     return ret;
@@ -166,7 +167,7 @@ bool q_delete_dup(struct list_head *head)
     element_t *entry, *safe;
     bool dup = false;
 
-    list_for_each_entry_safe (entry, safe, head, list) {
+    list_for_each_entry_safe(entry, safe, head, list) {
         if (&safe->list != head && !strcmp(entry->value, safe->value)) {
             dup = true;
             list_del(&entry->list);
